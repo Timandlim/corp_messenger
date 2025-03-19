@@ -5,7 +5,6 @@ def create_user(username, password):
     if User.query.filter_by(username=username).first():
         print(f"Пользователь '{username}' уже существует.")
     else:
-        # Вместо generate_password_hash используем gost_encrypt для шифрования пароля
         encrypted_password = gost_encrypt(password.encode('utf-8')).hex()
         user = User(username=username, password_hash=encrypted_password)
         db.session.add(user)

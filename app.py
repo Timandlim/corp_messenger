@@ -47,8 +47,7 @@ class Message(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# -------------------- ШИФРОВАНИЕ ПО ГОСТ (упрощённо) --------------------
-# Реализация ГОСТ 28147-89 в режиме ECB с PKCS7-отступами (не использовать в production!)
+# -------------------- ШИФРОВАНИЕ ПО ГОСТ--------------------
 SBOX = [
     [4, 10, 9, 2, 13, 8, 0, 14, 6, 11, 1, 12, 7, 15, 5, 3],
     [14, 11, 4, 12, 6, 13, 15, 10, 2, 3, 8, 1, 0, 7, 5, 9],
@@ -61,7 +60,6 @@ SBOX = [
 ]
 
 def gost_substitute(value):
-    """Применяет S-блоки к 32-битному значению (4 бита на каждый из 8 блоков)."""
     result = 0
     for i in range(8):
         nibble = (value >> (4 * i)) & 0xF
@@ -69,31 +67,15 @@ def gost_substitute(value):
     return result
 
 def rol32(value, bits):
-    """Циклический сдвиг 32-битного числа влево на bits бит."""
     return ((value << bits) & 0xFFFFFFFF) | (value >> (32 - bits))
 
 def f(x, k):
-    """Раундовая функция: (x + k) mod 2^32, S-блок замена и циклический сдвиг на 11 бит."""
     return rol32(gost_substitute((x + k) % 0x100000000), 11)
 
 def get_round_keys(key_parts):
-    """
-    Формирует список из 32 раундовых ключей:
-      - Первые 24 раунда: ключи key_parts повторяются 3 раза,
-      - Последние 8 раундов: ключи в обратном порядке.
-    """
     return key_parts * 3 + list(reversed(key_parts))
 
 def gost_encrypt_block(block, key_parts):
-    """
-    Шифрует 64-битный блок согласно алгоритму Гост 28147‑89.
-    Работает по схеме Фейстеля:
-      Для i-го раунда вычисляем:
-         temp = f(n1, k_i)
-         temp = temp XOR n2
-         затем: n2 = n1, n1 = temp
-    По завершении раундов выполняется дополнительный обмен.
-    """
     n1, n2 = struct.unpack("<II", block)
     round_keys = get_round_keys(key_parts)
     for k in round_keys:
@@ -106,10 +88,6 @@ def gost_encrypt_block(block, key_parts):
     return struct.pack("<II", n1, n2)
 
 def gost_decrypt_block(block, key_parts):
-    """
-    Дешифрует 64-битный блок, используя обратный порядок раундовых ключей.
-    Алгоритм идентичен шифрованию с обратной последовательностью ключей.
-    """
     n1, n2 = struct.unpack("<II", block)
     round_keys = list(reversed(get_round_keys(key_parts)))
     for k in round_keys:
