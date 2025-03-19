@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Chat{% endblock %}
+{% block content %}
+<h2>Welcome, {{ username }}</h2>
+<div class="chat-box" id="chat-box"></div>
+<form onsubmit="sendMessage(); return false;">
+    <label>Room</label>
+    <input type="text" id="room" required>
+    <label>Message</label>
+    <input type="text" id="message" required>
+    <button type="submit" class="button">Send</button>
+</form>
+<a href="{{ url_for('logout') }}" class="button">Logout</a>
+{% if current_user.is_authenticated and current_user.is_admin %}
+    <a href="{{ url_for('admin_panel') }}" class="button">Admin Panel</a>
+{% endif %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    
+    function sendMessage() {
+        let room = document.getElementById("room").value;
+        let message = document.getElementById("message").value;
+        socket.emit('send_message', {room: room, content: message});
+        document.getElementById("message").value = '';
+    }
+    
+    socket.on('receive_message', function(data) {
+        let chatBox = document.getElementById("chat-box");
+        let msgElement = document.createElement("p");
+        msgElement.textContent = data.username + ": " + data.content;
+        chatBox.appendChild(msgElement);
+    });
+</script>
+{% endblock %}

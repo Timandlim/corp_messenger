@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Мессенджер{% endblock %}
+{% block content %}
+<div class="row">
+  <!-- Левая колонка: список групп -->
+  <div class="col-md-3">
+    <h4>Мои группы</h4>
+    <ul class="list-group">
+      {% for grp in groups %}
+      <li class="list-group-item {% if current_group and grp.id == current_group.id %}active{% endif %}">
+        <a href="{{ url_for('group_chat', group_id=grp.id) }}" class="{% if current_group and grp.id == current_group.id %}text-white{% endif %}">
+          {{ grp.name }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <!-- Правая колонка: чат выбранной группы -->
+  <div class="col-md-9">
+    {% if current_group %}
+      <h4>Чат: {{ current_group.name }}</h4>
+      <div id="chat-history" class="messages-list border p-2 mb-3">
+        {% for m in messages %}
+        <div class="card mb-2">
+          <div class="card-body">
+            <h6 class="card-title">{{ m.sender }}</h6>
+            <p class="card-text">{{ m.content }}</p>
+            <p class="card-text"><small class="text-muted">{{ m.timestamp }}</small></p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <!-- Форма отправки сообщения -->
+      <form id="message-form">
+        <input type="hidden" id="group_id" value="{{ current_group.id }}">
+        <div class="form-group">
+          <label for="message">Сообщение</label>
+          <textarea class="form-control" id="message" name="message" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Отправить</button>
+      </form>
+    {% else %}
+      <h4>Вы не состоите ни в одной группе.</h4>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

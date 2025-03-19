@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h2>Welcome</h2>
+<a href="{{ url_for('register_page') }}" class="button">Register</a>
+<a href="{{ url_for('login_page') }}" class="button">Login</a>
+{% endblock %}
