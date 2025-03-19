@@ -1,12 +1,13 @@
 import argparse
-from app import app, db, User, Group, GroupMembership
-from werkzeug.security import generate_password_hash
+from app import app, db, User, Group, GroupMembership, gost_encrypt
 
 def create_user(username, password):
     if User.query.filter_by(username=username).first():
         print(f"Пользователь '{username}' уже существует.")
     else:
-        user = User(username=username, password_hash=generate_password_hash(password))
+        # Вместо generate_password_hash используем gost_encrypt для шифрования пароля
+        encrypted_password = gost_encrypt(password.encode('utf-8')).hex()
+        user = User(username=username, password_hash=encrypted_password)
         db.session.add(user)
         db.session.commit()
         print(f"Пользователь '{username}' создан.")
